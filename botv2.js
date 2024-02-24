@@ -44,7 +44,7 @@ bot.on("interactionCreate", async (interaction) => {
 });
 
 async function sendupdates(){
-const channel = client.channels.cache.find(channel => channel.name === 'general');
+const channel = Client.channels.cache.find(channel => channel.name === 'general');
 if (channel) {
 	message = await checkupdates()
 	if (message){
@@ -75,10 +75,10 @@ process.on('SIGINT', () => {
 bot.on("ready", () => {
 	console.log(`Bot started`);
 	if (maintancemode){
-	 client.user.setStatus('idle');
+	 Client.user.setStatus('idle');
 	}
 	else {
-		client.user.setStatus('online');
+		Client.user.setStatus('online');
 
 
 	}
