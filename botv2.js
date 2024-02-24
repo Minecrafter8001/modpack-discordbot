@@ -1,13 +1,14 @@
-const { Client, GatewayIntentBits, enableValidators, messageLink, setStatus } = require("discord.js");
+const { Client, GatewayIntentBits, enableValidators, messageLink } = require("discord.js");
 const { getLatest, getFileDetails, checkupdates } = require("./botAPIv2");
 const schedule = require('node-schedule');
 
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 
-const botToken = "token_here";
+const botToken = "MTAxNDI0NjA4MjIxMDk2MzU1OA.G6Gcwd.o8WeqqWIw_ngZmqeJr0oHgWKtmmKLb06aiomo8";
 enableupdates = false
-maintancemode = true
+tries = 0
+
 bot.on("interactionCreate", async (interaction) => {
 	if (!interaction.isCommand()) return;
 
@@ -44,7 +45,7 @@ bot.on("interactionCreate", async (interaction) => {
 });
 
 async function sendupdates(){
-const channel = Client.channels.cache.find(channel => channel.name === 'general');
+const channel = client.channels.cache.find(channel => channel.name === 'general');
 if (channel) {
 	message = await checkupdates()
 	if (message){
@@ -74,14 +75,6 @@ process.on('SIGINT', () => {
 
 bot.on("ready", () => {
 	console.log(`Bot started`);
-	if (maintancemode){
-	 Client.user.setStatus('idle');
-	}
-	else {
-		Client.user.setStatus('online');
-
-
-	}
 
 });
 
