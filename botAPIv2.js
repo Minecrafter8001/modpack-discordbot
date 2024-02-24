@@ -2,9 +2,10 @@ const axios = require('axios');
 const { format } = require('date-fns');
 const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
+const { messageLink } = require('discord.js');
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods/715572';
-const apiKey = 'not for you'; // Replace 'YOUR_API_KEY' with your actual CurseForge API key
+const apiKey = 'token_here'; // Replace 'YOUR_API_KEY' with your actual CurseForge API key
 
 // Define headers
 const headers = {
@@ -12,9 +13,20 @@ const headers = {
   'Accept': 'application/json',
   'x-api-key': apiKey
 };
+lastfileid = 0
+async function checkupdates(){
+  latestfileid = await getLatest(true)
+  if (latestfileid == lastfileid){
+   return false
+  }
+  else {
+    message = await getFileDetails(latestfileid)
+    return message
+  }
+}
 
 // Function to fetch information about the latest file
-async function getLatest() {
+async function getLatest(returnfileid) {
   try {
     // Fetch latest file
     const response = await axios.get(`${apiBaseUrl}/files`, { headers });
@@ -29,8 +41,12 @@ async function getLatest() {
     }
 
     // Fetch details for newest file
-    const message = await getFileDetails(newestFile.id);
-    return message;
+    if (!returnfileid) {
+     message = await getFileDetails(newestFile.id);
+     return message;}
+    else {
+      return newestFile.id
+    }
   } catch (err) {
     console.error(`Error occurred while fetching latest file: ${err.message}`);
     return "An Error occurred while fetching latest file /n please contact bot developer";
@@ -105,4 +121,4 @@ function stripHtml(html) {
   return html.replace(/<[^>]*>?/gm, '');
 }
 
-module.exports = { getLatest, getFileDetails };
+module.exports = { getLatest, getFileDetails, checkupdates };
