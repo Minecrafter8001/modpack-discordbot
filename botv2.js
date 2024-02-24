@@ -5,7 +5,7 @@ const schedule = require('node-schedule');
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 
-const botToken = "MTAxNDI0NjA4MjIxMDk2MzU1OA.G6Gcwd.o8WeqqWIw_ngZmqeJr0oHgWKtmmKLb06aiomo8";
+const botToken = "token_here";
 enableupdates = false
 tries = 0
 
