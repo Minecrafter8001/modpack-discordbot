@@ -5,7 +5,7 @@ const cheerio = require('cheerio');
 const { messageLink } = require('discord.js');
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods/715572';
-const apiKey = 'token_here'; // Replace 'YOUR_API_KEY' with your actual CurseForge API key
+const apiKey = ''; // Replace 'YOUR_API_KEY' with your actual CurseForge API key
 
 // Define headers
 const headers = {
