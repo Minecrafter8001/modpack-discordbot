@@ -7,8 +7,7 @@ const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const botToken = "token_here";
 enableupdates = false
-tries = 0
-
+maintancemode = true
 bot.on("interactionCreate", async (interaction) => {
 	if (!interaction.isCommand()) return;
 
