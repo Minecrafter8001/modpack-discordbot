@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, enableValidators, messageLink } = require("discord.js");
+const { Client, GatewayIntentBits, enableValidators, messageLink, setStatus } = require("discord.js");
 const { getLatest, getFileDetails, checkupdates } = require("./botAPIv2");
 const schedule = require('node-schedule');
 
