@@ -1,58 +1,88 @@
-const { Client, GatewayIntentBits } = require("discord.js");
-const schedule  = require('node-schedule');
-const fs = require('fs');
-const config = require('./config.json');
-const {checkupdates } = require("./botAPIv2")
+const { Client, GatewayIntentBits } = require('discord.js');
+const { getLatest, getFileDetails, checkupdates } = require('./botAPIv2');
+const { createLogger, format, transports } = require('winston');
+const schedule = require('node-schedule');
+const declareCommands = require("./declare_commands");
+
 
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
+const token = "";
+const ownerId = "512988669561274400"; // Replace with your bot owner's user ID
 
-const commands = new Map();
+let updatemessages = true;
 
-// Dynamically load command files
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const logger = createLogger({
+    level: 'info',
+    format: format.simple(),
+    transports: [new transports.Console()]
+});
 
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commands.set(command.name, command);
-}
-
-bot.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand()) return;
-
-    const command = commands.get(interaction.commandName);
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(error);
-        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+// Define the /latest command
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'latest') return;
+    logger.info('Executing /latest command...');
+    const fileInfo = await getLatest(false);
+    if (fileInfo instanceof Object) {
+        await interaction.reply(`Newest File Information:\nFile Name: ${fileInfo.file_name}\nFile Date: ${fileInfo.file_date}`);
+    } else {
+        await interaction.reply(fileInfo);
     }
 });
 
+// Define the /changelog command
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
+    const fileId = interaction.options.getInteger('file_id');
+    logger.info(`Executing /changelog command for file ID: ${fileId}`);
+    const changelogData = await getFileDetails(fileId);
+    await interaction.reply(changelogData);
+});
 
-async function sendupdates(){
-	const channel = client.channels.cache.find(channel => channel.name === 'general');
-	if (channel) {
-		message = await checkupdates()
-		if (message){
-			console.log('update found')
-			channel.send(`ATM 9 has updated:\n ` + message);
-			 
-		}
-		else {
-			console.log('no updates found')
-			return
-		}
-			
-		
-	} else {
-		console.error('Could not find the specified channel.');
-	}
-};
+// Define the /checkupdates command
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'checkupdates') return;
+    message = await checkupdates(interaction.guildId);
+    if (!message) {
+        console.log('no updates found');
+        interaction.reply("no updates found");
+    } else {
+        console.log('update found');
+        interaction.reply(`update found:\n ` + message);
+    }
+});
+
+// Define the /reload command
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'reload') return;
+
+    // Check if the user has administrator permissions or is the bot owner
+    if (!interaction.member.permissions.has(GatewayIntentBits.GuildMembers.MANAGE_GUILD) && interaction.user.id !== ownerId) {
+        return await interaction.reply('You do not have permission to use this command.');
+    }
+
+    logger.info("Reloading all commands...");
+    await declareCommands();
+    await interaction.reply('All commands have been reloaded.');
+});
 
 
-schedule.scheduleJob('45 20 * * *', sendupdates);
+
+// Define the /restart command
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'restart') return;
+
+    // Check if the user is the bot owner
+    if (interaction.user.id !== ownerId) {
+        return await interaction.reply('You do not have permission to use this command.');
+    }
+
+    logger.info("restarting bot...");
+    await interaction.reply('restarting bot...');
+    main(true, interaction.channelId)
+});
+
+
+
 
 process.on('SIGINT', () => {
     console.log('Received SIGINT. Logging out...');
@@ -64,4 +94,19 @@ bot.once("ready", () => {
     console.log(`Bot started`);
 });
 
-bot.login(config.token);
+
+// Refresh commands and then login
+function main(restartCMD, channelid) {
+    bot.destroy();
+    declareCommands();
+    
+    if (restartCMD) {
+        setTimeout(() => {
+            bot.login(token);
+        }, 10000);
+    } else {
+        console.log("starting bot...");
+        bot.login(token);
+    }
+}
+main()
