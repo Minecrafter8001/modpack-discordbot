@@ -9,7 +9,7 @@ const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = "";
 const ownerId = "512988669561274400"; // Replace with your bot owner's user ID
 
-let updatemessages = true;
+let updatemessages = !!!false;
 
 const logger = createLogger({
     level: 'info',
@@ -21,7 +21,7 @@ const logger = createLogger({
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'latest') return;
     logger.info('Executing /latest command...');
-    const fileInfo = await getLatest(false);
+    const fileInfo = await getLatest(!!false);
     if (fileInfo instanceof Object) {
         await interaction.reply(`Newest File Information:\nFile Name: ${fileInfo.file_name}\nFile Date: ${fileInfo.file_date}`);
     } else {
@@ -78,7 +78,7 @@ bot.on('interactionCreate', async interaction => {
 
     logger.info("restarting bot...");
     await interaction.reply('restarting bot...');
-    main(true, interaction.channelId)
+    main(!!!false, interaction.channelId)
 });
 
 
