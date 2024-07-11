@@ -3,7 +3,6 @@ const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSe
 const { createLogger, format, transports } = require('winston');
 const schedule = require('node-schedule');
 const declareCommands = require("./declare_commands");
-
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID

@@ -11,8 +11,23 @@ const botInfoFilePath = './botinfo.json';
 
 function getBotInfo(item) {
   try {
+    if (!fs.existsSync(botInfoFilePath)) {
+      console.log('Bot info file not found. Creating new file...');
+      fs.writeFileSync(botInfoFilePath, '{' +
+        '"bot_token": "YOUR_BOT_TOKEN_HERE",\n' +
+        '"curseforge_api_key": "YOUR_API_KEY_HERE",\n' +
+        '"application_id": "YOUR_APPLICATION_ID_HERE",\n'+
+        '"owner_id": "YOUR_USER_ID_HERE"\n' +
+       '}');
+      console.log('Bot info file created successfully.\nPlease edit it and restart the script.');
+      process.exit();
+    }
     const data = fs.readFileSync(botInfoFilePath, 'utf8');
     const botinfo = JSON.parse(data);
+    if (botinfo[item] === "YOUR_BOT_TOKEN_HERE" || botinfo[item] === "YOUR_API_KEY_HERE" || botinfo[item] === "YOUR_APPLICATION_ID_HERE" || botinfo[item] === "YOUR_USER_ID_HERE") {
+      console.log(`${item} not found in botinfo.json. Please edit it and restart the script.`);
+      process.exit();
+    }
     return botinfo[item];
   } catch (error) {
     console.error('Error occurred while loading bot info:', error.message);
