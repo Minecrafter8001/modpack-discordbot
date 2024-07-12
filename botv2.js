@@ -227,8 +227,12 @@ bot.on('interactionCreate', async interaction => {
     if (!interaction.isSelectMenu() || interaction.customId !== 'select_version') return;
 
     const selectedVersionId = interaction.values[0];
+    const selectedVersionDetails = await getFileDetails(selectedVersionId, interaction.guildId,true);
+    console.debug(selectedVersionDetails);
+    const selectedVersionName = selectedVersionDetails.fileName;
+    console.debug(selectedVersionName);
     await saveSettings(interaction.guildId, 'server_version', parseInt(selectedVersionId));
-    await interaction.reply(`Server version set to ${selectedVersionId}.`);
+    await interaction.reply(`Server version set to ${selectedVersionName}.`);
 });
 
 process.on('SIGINT', () => {

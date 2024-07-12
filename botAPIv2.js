@@ -162,7 +162,7 @@ async function getLatest(returnFileId, guildId) {
 
 
 // Function to fetch details about a specific file from CurseForge API
-async function getFileDetails(fileId, guildId) {
+async function getFileDetails(fileId, guildId,raw) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}`, { headers });
@@ -176,7 +176,15 @@ async function getFileDetails(fileId, guildId) {
       const message = `**File Name:** ${fileData.fileName}\n` +
                       `**File Date:** <t:${discordTimestamp}:F> (<t:${discordTimestamp}:R>)\n` +
                       `**Changelog:**\n${changelog}`;
-      return message;
+
+      if (!raw) {
+        return message;
+      }
+      return {
+        fileName: fileData.fileName,
+        fileDate: fileData.fileDate,
+        changelog: changelog
+      };
     } else {
       console.error('File details not found or incomplete in the response.');
       return "File details not found or incomplete in the response.";
