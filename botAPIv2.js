@@ -47,12 +47,13 @@ async function checkUpdates(guildId) {
   try {
     // Load the last file ID from the settings file
     const lastFileId = await loadSettings(guildId, 'lastfileid');
+    const serverVersion = await loadSettings(guildId, 'server_version');
     
     // Fetch the latest file ID from the API
     const latestFileId = await getLatestFileId(guildId);
 
     // Compare the latest file ID with the last file ID
-    if (latestFileId === lastFileId) {
+    if (latestFileId === lastFileId | serverVersion === latestFileId) {
       return false; // No updates
     } else {
       // If there's a new update, fetch and return the update message
