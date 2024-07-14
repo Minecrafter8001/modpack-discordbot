@@ -5,9 +5,10 @@ const fsPromises = require('fs').promises;
 const fs = require('fs');
 try {
   const io = require('@pm2/io');
+  const pm2 = true
 } catch (error) {
   console.log('Error loading @pm2/io:'+ error +" \nExtra metrics will not be provided",);
-  const io = false;
+  const pm2 = false;
 }
 
 // Define constants
@@ -49,7 +50,7 @@ const headers = {
   'x-api-key': apiKey
 };
 
-if (io) {
+if (pm2) {
   const commandsRan = io.metric({
       name: 'commands_ran',
       id: 'app/metrics/commands_ran',
@@ -61,7 +62,7 @@ if (io) {
 }
 // Define the metric logger
 function logMetric(metricName, command, value) {
-  if (io) {
+  if (pm2) {
       try {
           const metric = io.metric({ name: metricName, id: `app/metrics/${metricName}` });
           switch (command) {
