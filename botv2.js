@@ -1,11 +1,17 @@
 const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
+const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings,logMetric } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
-const schedule = require('node-schedule');
 const declareCommands = require("./declare_commands");
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
+
+
+
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+    logMetric("commands_ran","inc")
+});
 
 const logger = createLogger({
     level: 'info',
@@ -243,6 +249,9 @@ process.on('SIGINT', () => {
 
 bot.once("ready", () => {
     console.log("Bot started");
+    console.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
+
+
 });
 
 // Refresh commands and then login

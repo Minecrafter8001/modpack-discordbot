@@ -3,6 +3,12 @@ const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
 const fsPromises = require('fs').promises;
 const fs = require('fs');
+try {
+  const io = require('@pm2/io');
+} catch (error) {
+  console.log('Error loading @pm2/io:'+ error +" \nExtra metrics will not be provided",);
+  const io = false;
+}
 
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
@@ -42,6 +48,39 @@ const headers = {
   'Accept': 'application/json',
   'x-api-key': apiKey
 };
+
+if (io) {
+  const commandsRan = io.metric({
+      name: 'commands_ran',
+      id: 'app/metrics/commands_ran',
+  })
+  const APIcalls = io.metric({
+      name: 'api_calls',
+      id: 'app/metrics/api_calls',
+  })
+}
+// Define the metric logger
+function logMetric(metricName, command, value) {
+  if (io) {
+      try {
+          const metric = io.metric({ name: metricName, id: `app/metrics/${metricName}` });
+          switch (command) {
+              case 'inc':
+                  metric.inc();
+                  break;
+              case 'dec':
+                  metric.dec();
+                  break;
+              case 'set':
+                  metric.set(value);
+                  break;
+          }
+      } catch (error) {
+          console.error(`Error logging metric: ${metricName}`, error);
+          return false
+      }
+  }
+}
 
 async function checkUpdates(guildId) {
   try {
@@ -88,8 +127,8 @@ async function getModFiles(modId, queryParams = {}) {
       const response = await axios.get(`${apiBaseUrl}/${modId}/files`, { headers, params });
 
       if (response.status === 200) {
+          APIcalls.inc()
           console.log('Files fetched successfully');
-          console.log(response.data);
 
           return response.data.data; // Assuming response.data contains the 'data' array
       } else {
@@ -108,6 +147,10 @@ async function getLatestFileId(guildId) {
     const modpackId = await loadSettings(guildId, 'modpackid');
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files`, { headers });
     const files = response.data.data;
+    if (response.status !== 200) {
+      throw new Error(`Error code ${response.status}`);
+    }
+    APIcalls.inc()
 
     // Find newest file
     let newestFile = null;
@@ -132,6 +175,10 @@ async function getLatest(returnFileId, guildId) {
     console.log(url)
     const response = await axios.get(url, { headers });
     const files = response.data.data;
+    if (response.status !== 200) {
+      throw new Error(`Error code ${response.status}`);
+    }
+    APIcalls.inc()
 
     // Find newest file
     let newestFile = null;
@@ -168,6 +215,10 @@ async function getFileDetails(fileId, guildId,raw) {
     const modpackId = await loadSettings(guildId, 'modpackid');
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}`, { headers });
     const fileData = response.data.data;
+    if (response.status !== 200) {
+      throw new Error(`Error code ${response.status}`);
+    }
+    APIcalls.inc()
 
     if (fileData && fileData.fileName && fileData.fileDate) {
       const fileDate = new Date(fileData.fileDate);
@@ -202,6 +253,11 @@ async function getChangelog(fileId, guildId) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}/changelog`, { headers });
+    if (response.status !== 200) {
+      throw new Error(`Error code ${response.status}`);
+    }
+    APIcalls.inc()
+    
     let changelogData = response.data.data;
 
     const $ = cheerio.load(changelogData);
@@ -258,4 +314,4 @@ async function saveSettings(guildId, setting, value) {
   }
 }
 
-module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, saveSettings, loadSettings, getBotInfo, getLatest };
+module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, saveSettings, loadSettings, getBotInfo, getLatest, logMetric};
