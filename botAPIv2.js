@@ -5,10 +5,10 @@ const fsPromises = require('fs').promises;
 const fs = require('fs');
 try {
   const io = require('@pm2/io');
-  const pm2 = true
+  var pm2 = true
 } catch (error) {
   console.log('Error loading @pm2/io:'+ error +" \nExtra metrics will not be provided",);
-  const pm2 = false;
+  var pm2 = false;
 }
 
 // Define constants
