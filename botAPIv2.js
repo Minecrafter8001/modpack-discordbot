@@ -4,10 +4,10 @@ const cheerio = require('cheerio');
 const fsPromises = require('fs').promises;
 const fs = require('fs');
 try {
-  const io = require('@pm2/io');
+  const pm2io = require('@pm2/pm2io');
   var pm2 = true
 } catch (error) {
-  console.log('Error loading @pm2/io:'+ error +" \nExtra metrics will not be provided",);
+  console.log('Error loading @pm2/pm2io:'+ error +" \nExtra metrics will not be provided",);
   var pm2 = false;
 }
 
@@ -51,11 +51,11 @@ const headers = {
 };
 
 if (pm2) {
-  const commandsRan = io.metric({
+  const commandsRan = pm2io.metric({
       name: 'commands_ran',
       id: 'app/metrics/commands_ran',
   })
-  const APIcalls = io.metric({
+  const APIcalls = pm2io.metric({
       name: 'api_calls',
       id: 'app/metrics/api_calls',
   })
@@ -64,7 +64,7 @@ if (pm2) {
 function logMetric(metricName, command, value) {
   if (pm2) {
       try {
-          const metric = io.metric({ name: metricName, id: `app/metrics/${metricName}` });
+          const metric = pm2io.metric({ name: metricName, id: `app/metrics/${metricName}` });
           switch (command) {
               case 'inc':
                   metric.inc();
