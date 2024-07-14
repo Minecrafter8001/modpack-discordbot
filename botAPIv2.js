@@ -3,13 +3,7 @@ const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
 const fsPromises = require('fs').promises;
 const fs = require('fs');
-try {
-  const pm2io = require('@pm2/pm2io');
-  var pm2 = true
-} catch (error) {
-  console.log('Error loading @pm2/pm2io:'+ error +" \nExtra metrics will not be provided",);
-  var pm2 = false;
-}
+const pm2io = require('@pm2/pm2io')
 
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
@@ -50,16 +44,15 @@ const headers = {
   'x-api-key': apiKey
 };
 
-if (pm2) {
-  const commandsRan = pm2io.metric({
+var commandsRan = pm2io.metric({
       name: 'commands_ran',
       id: 'app/metrics/commands_ran',
   })
-  const APIcalls = pm2io.metric({
+var APIcalls = pm2io.metric({
       name: 'api_calls',
       id: 'app/metrics/api_calls',
   })
-}
+
 // Define the metric logger
 function logMetric(metricName, command, value) {
   if (pm2) {
