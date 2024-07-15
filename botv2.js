@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
-const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings,logMetric } = require('./botAPIv2');
+const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
 const declareCommands = require("./declare_commands");
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });

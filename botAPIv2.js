@@ -279,4 +279,4 @@ async function saveSettings(guildId, setting, value) {
   }
 }
 
-module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, saveSettings, loadSettings, getBotInfo, getLatest, logMetric};
+module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, saveSettings, loadSettings, getBotInfo, getLatest};
