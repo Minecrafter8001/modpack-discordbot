@@ -6,13 +6,6 @@ const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
 
-
-
-bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand()) return;
-    logMetric("commands_ran","inc")
-});
-
 const logger = createLogger({
     level: 'info',
     format: format.simple(),

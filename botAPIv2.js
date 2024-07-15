@@ -3,7 +3,6 @@ const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
 const fsPromises = require('fs').promises;
 const fs = require('fs');
-const pm2io = require('@pm2/pm2io')
 
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
@@ -44,37 +43,9 @@ const headers = {
   'x-api-key': apiKey
 };
 
-var commandsRan = pm2io.metric({
-      name: 'commands_ran',
-      id: 'app/metrics/commands_ran',
-  })
-var APIcalls = pm2io.metric({
-      name: 'api_calls',
-      id: 'app/metrics/api_calls',
-  })
 
-// Define the metric logger
-function logMetric(metricName, command, value) {
-  if (pm2) {
-      try {
-          const metric = pm2io.metric({ name: metricName, id: `app/metrics/${metricName}` });
-          switch (command) {
-              case 'inc':
-                  metric.inc();
-                  break;
-              case 'dec':
-                  metric.dec();
-                  break;
-              case 'set':
-                  metric.set(value);
-                  break;
-          }
-      } catch (error) {
-          console.error(`Error logging metric: ${metricName}`, error);
-          return false
-      }
-  }
-}
+
+
 
 async function checkUpdates(guildId) {
   try {
@@ -121,7 +92,7 @@ async function getModFiles(modId, queryParams = {}) {
       const response = await axios.get(`${apiBaseUrl}/${modId}/files`, { headers, params });
 
       if (response.status === 200) {
-          APIcalls.inc()
+          
           console.log('Files fetched successfully');
 
           return response.data.data; // Assuming response.data contains the 'data' array
@@ -144,7 +115,7 @@ async function getLatestFileId(guildId) {
     if (response.status !== 200) {
       throw new Error(`Error code ${response.status}`);
     }
-    APIcalls.inc()
+    
 
     // Find newest file
     let newestFile = null;
@@ -172,7 +143,7 @@ async function getLatest(returnFileId, guildId) {
     if (response.status !== 200) {
       throw new Error(`Error code ${response.status}`);
     }
-    APIcalls.inc()
+    
 
     // Find newest file
     let newestFile = null;
@@ -212,7 +183,7 @@ async function getFileDetails(fileId, guildId,raw) {
     if (response.status !== 200) {
       throw new Error(`Error code ${response.status}`);
     }
-    APIcalls.inc()
+    
 
     if (fileData && fileData.fileName && fileData.fileDate) {
       const fileDate = new Date(fileData.fileDate);
@@ -250,7 +221,7 @@ async function getChangelog(fileId, guildId) {
     if (response.status !== 200) {
       throw new Error(`Error code ${response.status}`);
     }
-    APIcalls.inc()
+    
     
     let changelogData = response.data.data;
 
