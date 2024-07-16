@@ -13,6 +13,7 @@
     "html-to-text": "^7.0.0",
     "node-schedule": "^2.1.1",
     "pm2": "^5.4.2",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "node": "^18.10.0"
   }
 }
