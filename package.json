@@ -6,6 +6,7 @@
     "start": "node botv2.js"
   },
   "dependencies": {
+    "node": "^18.10.0",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.10",
     "date-fns": "^2.27.0",
@@ -13,7 +14,6 @@
     "html-to-text": "^7.0.0",
     "node-schedule": "^2.1.1",
     "pm2": "^5.4.2",
-    "winston": "^3.3.3",
-    "node": "^18.10.0"
+    "winston": "^3.3.3"
   }
 }
