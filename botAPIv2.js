@@ -110,6 +110,9 @@ async function getModFiles(modId, queryParams = {}) {
 async function getLatestFileId(guildId) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
+    if (!modpackId){
+      throw new Error('Modpack ID not found');
+    }
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files`, { headers });
     const files = response.data.data;
     if (response.status !== 200) {
@@ -136,6 +139,9 @@ async function getLatestFileId(guildId) {
 async function getLatest(returnFileId, guildId) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
+    if (!modpackId){
+      throw new Error('Modpack ID not found');
+    }
     const url = apiBaseUrl + "/" + modpackId + "/files"
     console.log(url)
     const response = await axios.get(url, { headers });
@@ -178,6 +184,12 @@ async function getLatest(returnFileId, guildId) {
 async function getFileDetails(fileId, guildId,raw) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
+    if (!modpackId){
+      throw new Error('Modpack ID not found');
+    }
+    if (!modpackId){
+      throw new Error('Modpack ID not found');
+    }
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}`, { headers });
     const fileData = response.data.data;
     if (response.status !== 200) {
@@ -217,6 +229,9 @@ async function getFileDetails(fileId, guildId,raw) {
 async function getChangelog(fileId, guildId) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
+    if (!modpackId){
+      throw new Error('Modpack ID not found');
+    }
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}/changelog`, { headers });
     if (response.status !== 200) {
       throw new Error(`Error code ${response.status}`);
