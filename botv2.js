@@ -62,13 +62,16 @@ bot.on('interactionCreate', async interaction => {
 // Define the /checkupdates command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'checkupdates') return;
-    const message = await checkUpdates(interaction.guildId);
-    if (!message) {
-        console.log('no updates found');
-        interaction.reply("no updates found");
-    } else {
-        console.log('update found');
-        interaction.reply(`update found:\n${message}`);
+    try {
+        const message = await checkUpdates(interaction.guildId);
+        if (!message) {
+            await interaction.reply('no updates found');
+        } else {
+            await interaction.reply(`update found:\n${message}`);
+        }
+    } catch (error) {
+        console.error('Error occurred while checking updates:', error.message);
+        await interaction.reply('An error occurred while fetching update details. Please try again later.');
     }
 });
 
