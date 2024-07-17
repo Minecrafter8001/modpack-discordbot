@@ -9,14 +9,6 @@ const commands = [
     {
         name: 'changelog',
         description: 'Get the changelog for a specific file',
-        options: [
-            {
-                name: 'file_id',
-                description: 'The ID of the file',
-                type: 4, // Integer type
-                required: true,
-            },
-        ],
     },
     {
         name: 'latest',

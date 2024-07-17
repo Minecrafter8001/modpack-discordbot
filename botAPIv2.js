@@ -90,18 +90,16 @@ async function getModFiles(modId, queryParams = {}) {
 
       console.log('Sending API request...');
       const response = await axios.get(`${apiBaseUrl}/${modId}/files`, { headers, params });
-
-      if (response.status === 200) {
-          
-          console.log('Files fetched successfully');
-
-          return response.data.data; // Assuming response.data contains the 'data' array
-      } else {
-          console.error(`Failed to fetch files. Status: ${response.status}`);
-          throw new Error(`Failed to fetch files. Status: ${response.status}`);
+      if (!response.status === 200) {
+          errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
+          console.error(errormessage);
+          throw new Error(errormessage);
       }
+
+      console.log('Files fetched successfully');
+      return response.data.data; // Assuming response.data contains the 'data' array
   } catch (error) {
-      console.error('API Error: Failed fetching mod files:', error.message);
+      console.error(`API Error: Failed fetching mod files from: ${apiBaseUrl}/${modId}/files`, error.message);
       throw error; // Re-throw the error to be handled by the caller
   }
 }
@@ -116,7 +114,9 @@ async function getLatestFileId(guildId) {
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files`, { headers });
     const files = response.data.data;
     if (response.status !== 200) {
-      throw new Error(`Error code ${response.status}`);
+      errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
+      console.error(errormessage);
+      throw new Error(errormessage);
     }
     
 
@@ -147,7 +147,9 @@ async function getLatest(returnFileId, guildId) {
     const response = await axios.get(url, { headers });
     const files = response.data.data;
     if (response.status !== 200) {
-      throw new Error(`Error code ${response.status}`);
+      errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
+      console.error(errormessage);
+      throw new Error(errormessage);
     }
     
 
@@ -193,7 +195,9 @@ async function getFileDetails(fileId, guildId,raw) {
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}`, { headers });
     const fileData = response.data.data;
     if (response.status !== 200) {
-      throw new Error(`Error code ${response.status}`);
+      errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files/${fileId}. Status: ${response.status}`
+      console.error(errormessage);
+      throw new Error(errormessage);
     }
     
 
@@ -234,7 +238,9 @@ async function getChangelog(fileId, guildId) {
     }
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}/changelog`, { headers });
     if (response.status !== 200) {
-      throw new Error(`Error code ${response.status}`);
+      errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files/${fileId}/changelog. Status: ${response.status}`
+      console.error(errormessage);
+      throw new Error(errormessage);
     }
     
     

@@ -2,15 +2,35 @@ const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, String
 const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
 const declareCommands = require("./declare_commands");
+const internal = require('stream');
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
 
 const logger = createLogger({
-    level: 'info',
+    level: 'debug',
     format: format.simple(),
     transports: [new transports.Console()]
 });
+
+async function handleVersionSelect(guildId) {
+    
+    const versionSelect = new StringSelectMenuBuilder()
+        .setCustomId('select_version')
+        .setPlaceholder('Select a version...');
+
+    const modId = await loadSettings(guildId, 'modpackid');
+    const modFiles = await getModFiles(modId);
+    const options = modFiles.map(file => ({
+        label: file.fileName,
+        value: file.id.toString(),
+    }));
+    versionSelect.addOptions(options);
+    
+    const row = new ActionRowBuilder().addComponents(versionSelect);
+    return row;
+    
+}
 
 // Define the /latest command
 bot.on('interactionCreate', async interaction => {
@@ -48,19 +68,65 @@ bot.on('interactionCreate', async interaction => {
       await interaction.reply('An error occurred while fetching latest file information.');
     }
 });
-  
 
 // Define the /changelog command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
-    const fileId = interaction.options.getInteger('file_id');
-    logger.info(`Executing /changelog command for file ID: ${fileId}`);
-    const changelogData = await getFileDetails(fileId, interaction.guildId);
-    await interaction.reply(changelogData);
+    console.log();
+
+    try {
+        const modpackId = await loadSettings(interaction.guildId, 'modpackid');
+        if (typeof(modpackId) !== 'number') {
+            await interaction.reply('Modpack ID not set');
+            console.error("modpack id not set");
+            return;
+        }
+        console.log(modpackId);
+        const modFiles = await getModFiles(modpackId);
+
+        if (!modFiles || modFiles.length === 0) {
+            return await interaction.reply('No versions found.');
+        }
+
+        const options = modFiles.map(file => ({
+            label: file.fileName,
+            value: file.id.toString(),
+        }));
+
+        const row = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId(`setversion_${interaction.guildId}`)
+                .setPlaceholder('Select a version...')
+                .addOptions(options)
+        );
+
+        const response = await interaction.reply({ content: 'Please select a version:', components: [row] });
+
+        const filter = i => i.user.id === interaction.user.id && i.isSelectMenu();
+        const collector = response.createMessageComponentCollector({ filter, time: 60_000 });
+
+        collector.on('collect', async i => {
+            const selectedVersionId = i.values[0];
+            const selectedVersionDetails = await getFileDetails(selectedVersionId, interaction.guildId);
+            interaction.editReply({ content: selectedVersionDetails, components: [] });
+            collector.stop();
+        });
+
+        collector.on('end', collected => {
+            if (collected.size === 0) {
+                interaction.editReply({ content: 'Selection not received within 1 minute, cancelling', components: [] });
+            }
+        });
+
+    } catch (error) {
+        console.error('Error occurred while executing /changelog command:', error.message);
+        await interaction.update('An error occurred while fetching changelog.');
+    }
 });
 
 // Define the /checkupdates command
 bot.on('interactionCreate', async interaction => {
+
     if (!interaction.isCommand() || interaction.commandName !== 'checkupdates') return;
     try {
         const message = await checkUpdates(interaction.guildId);
@@ -185,12 +251,10 @@ bot.on('interactionCreate', async interaction => {
 // Define the /setversion command with dropdown using getModFiles function
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'setversion') return;
-    console.log();
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
         return await interaction.reply('You do not have permission to use this command.');
     }
-
 
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
@@ -213,28 +277,27 @@ bot.on('interactionCreate', async interaction => {
 
         const row = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
-                .setCustomId('select_version')
+                .setCustomId(`setversion_${interaction.guildId}`)
                 .setPlaceholder('Select a version...')
                 .addOptions(options)
         );
 
-        await interaction.reply({ content: 'Please select the server version:', components: [row] });
+        const message = await interaction.reply({ content: 'Please select the server version:', components: [row] });
+        const filter = i => i.user.id === interaction.user.id && i.isSelectMenu();
+        const collector = message.createMessageComponentCollector({ filter, time: 60_000 });
+
+        collector.on('collect', async i => {
+            const selectedVersionId = i.values[0];
+            const selectedVersionDetails = await getFileDetails(selectedVersionId, interaction.guildId, true);
+            const selectedVersionName = selectedVersionDetails.fileName;
+            await saveSettings(interaction.guildId, 'server_version', parseInt(selectedVersionId));
+            await interaction.editReply(`Server version set to ${selectedVersionName}.`, { components: [] });
+            collector.stop();
+        });
     } catch (error) {
         console.error(`botv2.js:Error fetching mod files: ${error.message}`);
         await interaction.reply('An error occurred while fetching mod versions. Please try again later.');
     }
-});
-
-bot.on('interactionCreate', async interaction => {
-    if (!interaction.isSelectMenu() || interaction.customId !== 'select_version') return;
-
-    const selectedVersionId = interaction.values[0];
-    const selectedVersionDetails = await getFileDetails(selectedVersionId, interaction.guildId,true);
-    console.debug(selectedVersionDetails);
-    const selectedVersionName = selectedVersionDetails.fileName;
-    console.debug(selectedVersionName);
-    await saveSettings(interaction.guildId, 'server_version', parseInt(selectedVersionId));
-    await interaction.reply(`Server version set to ${selectedVersionName}.`);
 });
 
 process.on('SIGINT', () => {
@@ -265,3 +328,4 @@ async function main(restartCMD, channelid) {
 }
 
 main();
+
