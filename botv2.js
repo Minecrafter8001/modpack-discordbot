@@ -13,24 +13,13 @@ const logger = createLogger({
     transports: [new transports.Console()]
 });
 
-async function handleVersionSelect(guildId) {
-    
-    const versionSelect = new StringSelectMenuBuilder()
-        .setCustomId('select_version')
-        .setPlaceholder('Select a version...');
 
-    const modId = await loadSettings(guildId, 'modpackid');
-    const modFiles = await getModFiles(modId);
-    const options = modFiles.map(file => ({
-        label: file.fileName,
-        value: file.id.toString(),
-    }));
-    versionSelect.addOptions(options);
-    
-    const row = new ActionRowBuilder().addComponents(versionSelect);
-    return row;
-    
-}
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+    console.log(`Command: ${interaction.commandName}, Ran in ${interaction.guildId || 'DMs'}, by ${interaction.user.tag}`);
+)
+
+
 
 // Define the /latest command
 bot.on('interactionCreate', async interaction => {
