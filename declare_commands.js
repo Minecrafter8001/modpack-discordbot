@@ -22,14 +22,15 @@ const commands = [
         name: 'reload',
         description: 'Reload all commands (administrators only)',
     },
-    {
+    /*{
         name: 'restart',
         description: 'Reboots the bot (bot owner only)',
     },
+    
     {
         name: 'shutdown',
         description: 'Shutdowns the bot (bot owner only)',
-    },
+    },*/
     {
         name: 'setmodpackid',
         description: 'Set the modpack ID (administrators only)',
