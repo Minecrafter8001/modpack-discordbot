@@ -8,7 +8,7 @@ const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
 
 const logger = createLogger({
-    level: 'debug',
+    level: 'info',
     format: format.simple(),
     transports: [new transports.Console()]
 });
@@ -16,20 +16,18 @@ const logger = createLogger({
 
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
-    console.log(`Command: ${interaction.commandName}, Ran in ${interaction.guildId || 'DMs'}, by ${interaction.user.tag}`);
-)
+    logger.info(`ran command: ${interaction.commandName}, \nin guild: ${interaction.guildId || 'DMs'}, \nby user: ${interaction.user.tag}`);
+});
 
 
 
 // Define the /latest command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'latest') return;
-    
-    logger.info('Executing /latest command...');
-    
+        
     try {
       const fileInfo = await getLatest(false, interaction.guildId);
-      console.log('File Info:', fileInfo); // Log fileInfo for debugging
+      logger.debug('File Info:', fileInfo); // Log fileInfo for debugging
       
       switch (true) {
           case !fileInfo:
@@ -53,7 +51,7 @@ bot.on('interactionCreate', async interaction => {
               break;
       }
     } catch (error) {
-      console.error('Error occurred while executing /latest command:', error.message);
+      logger.error('Error occurred while executing /latest command:', error.message);
       await interaction.reply('An error occurred while fetching latest file information.');
     }
 });
@@ -61,16 +59,14 @@ bot.on('interactionCreate', async interaction => {
 // Define the /changelog command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
-    console.log();
-
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
         if (typeof(modpackId) !== 'number') {
             await interaction.reply('Modpack ID not set');
-            console.error("modpack id not set");
+            logger.error("modpack id not set");
             return;
         }
-        console.log(modpackId);
+        logger.log(modpackId);
         const modFiles = await getModFiles(modpackId);
 
         if (!modFiles || modFiles.length === 0) {
@@ -108,7 +104,7 @@ bot.on('interactionCreate', async interaction => {
         });
 
     } catch (error) {
-        console.error('Error occurred while executing /changelog command:', error.message);
+        logger.error('Error occurred while executing /changelog command:', error.message);
         await interaction.update('An error occurred while fetching changelog.');
     }
 });
@@ -125,7 +121,7 @@ bot.on('interactionCreate', async interaction => {
             await interaction.reply(`update found:\n${message}`);
         }
     } catch (error) {
-        console.error('Error occurred while checking updates:', error.message);
+        logger.error('Error occurred while checking updates:', error.message);
         await interaction.reply('An error occurred while fetching update details. Please try again later.');
     }
 });
@@ -141,7 +137,7 @@ bot.on('interactionCreate', async interaction => {
       const fileId = await loadSettings(guildId, 'server_version');
       if (!typeof(fileID) == "number"){
         interaction.reply('Server version not set.\n please spam lion until he updates it : )');
-        console.error("server version not set");
+        logger.error("server version not set");
         return;
       }
       
@@ -153,7 +149,7 @@ bot.on('interactionCreate', async interaction => {
       const message = await getFileDetails(fileId, guildId);
       interaction.reply('current server version\n' + message);
     } catch (error) {
-      console.error('Error handling /serverVersion command:', error.message);
+      logger.error('Error handling /serverVersion command:', error.message);
       interaction.reply('An error occurred while fetching server version details. Please try again later.');
     }
 });
@@ -189,11 +185,11 @@ bot.on('interactionCreate', async interaction => {
     const { exec } = require('child_process');
     exec('./manageBot.sh -r <bot_process_name>', (error, stdout, stderr) => {
         if (error) {
-            console.error(`Error executing restart script: ${error.message}`);
+            logger.error(`Error executing restart script: ${error.message}`);
             interaction.reply('Error restarting bot.');
             return;
         }
-        console.log(`Restart script output: ${stdout}`);
+        logger.log(`Restart script output: ${stdout}`);
         interaction.reply('Bot restarted successfully.');
     });
 });
@@ -214,11 +210,11 @@ bot.on('interactionCreate', async interaction => {
     const { exec } = require('child_process');
     exec('./manageBot.sh <bot_process_name>', (error, stdout, stderr) => {
         if (error) {
-            console.error(`Error executing shutdown script: ${error.message}`);
+            logger.error(`Error executing shutdown script: ${error.message}`);
             interaction.reply('Error shutting down bot.');
             return;
         }
-        console.log(`Shutdown script output: ${stdout}`);
+        logger.log(`Shutdown script output: ${stdout}`);
         interaction.reply('Bot shut down successfully.');
     });
 });
@@ -249,10 +245,10 @@ bot.on('interactionCreate', async interaction => {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
         if (typeof(modpackId) !== 'number') {
             await interaction.reply('Modpack ID not set');
-            console.error("modpack id not set");
+            logger.error("modpack id not set");
             return;
         }
-        console.log(modpackId);
+        logger.log(modpackId);
         const modFiles = await getModFiles(modpackId);
 
         if (!modFiles || modFiles.length === 0) {
@@ -284,20 +280,20 @@ bot.on('interactionCreate', async interaction => {
             collector.stop();
         });
     } catch (error) {
-        console.error(`botv2.js:Error fetching mod files: ${error.message}`);
+        logger.error(`botv2.js:Error fetching mod files: ${error.message}`);
         await interaction.reply('An error occurred while fetching mod versions. Please try again later.');
     }
 });
 
 process.on('SIGINT', () => {
-    console.log('Received SIGINT. Logging out...');
+    logger.log('Received SIGINT. Logging out...');
     bot.destroy();
     process.exit();
 });
 
 bot.once("ready", () => {
-    console.log("Bot started");
-    console.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
+    logger.log("Bot started");
+    logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
 
 
 });
@@ -311,7 +307,7 @@ async function main(restartCMD, channelid) {
             bot.login(token);
         }, 10000); // Wait 10 seconds before logging in again after restart
     } else {
-        console.log("Starting bot...");
+        logger.log("Starting bot...");
         bot.login(token);
     }
 }

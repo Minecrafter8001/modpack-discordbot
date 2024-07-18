@@ -3,34 +3,41 @@ const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
 const fsPromises = require('fs').promises;
 const fs = require('fs');
+const { createLogger, format, transports } = require('winston');
 
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
 const dbFilePath = './settings.json';
 const botInfoFilePath = './botinfo.json';
 
+const logger = createLogger({
+  level: 'info',
+  format: format.simple(),
+  transports: [new transports.Console()]
+});
+
 function getBotInfo(item) {
   try {
     if (!fs.existsSync(botInfoFilePath)) {
-      console.log('Bot info file not found. Creating new file...');
+      logger.info('Bot info file not found. Creating new file...');
       fs.writeFileSync(botInfoFilePath, '{' +
         '"bot_token": "YOUR_BOT_TOKEN_HERE",\n' +
         '"curseforge_api_key": "YOUR_API_KEY_HERE",\n' +
         '"application_id": "YOUR_APPLICATION_ID_HERE",\n'+
         '"owner_id": "YOUR_USER_ID_HERE"\n' +
        '}');
-      console.log('Bot info file created successfully.\nPlease edit it and restart the script.');
+      logger.info('Bot info file created successfully.\nPlease edit it and restart the script.');
       process.exit();
     }
     const data = fs.readFileSync(botInfoFilePath, 'utf8');
     const botinfo = JSON.parse(data);
     if (botinfo[item] === "YOUR_BOT_TOKEN_HERE" || botinfo[item] === "YOUR_API_KEY_HERE" || botinfo[item] === "YOUR_APPLICATION_ID_HERE" || botinfo[item] === "YOUR_USER_ID_HERE") {
-      console.log(`${item} not found in botinfo.json. Please edit it and restart the script.`);
+      logger.info(`${item} not found in botinfo.json. Please edit it and restart the script.`);
       process.exit();
     }
     return botinfo[item];
   } catch (error) {
-    console.error('Error occurred while loading bot info:', error.message);
+    logger.error('Error occurred while loading bot info:', error.message);
     return undefined;
   }
 }
@@ -69,7 +76,7 @@ async function checkUpdates(guildId) {
       return message;
     }
   } catch (error) {
-    console.error('Error occurred while checking updates:', error.message);
+    logger.error('Error occurred while checking updates:', error.message);
     return false;
   }
 }
@@ -77,7 +84,7 @@ async function checkUpdates(guildId) {
 // Function to fetch all files of a specified mod from CurseForge API
 async function getModFiles(modId, queryParams = {}) {
   try {
-      console.log('Fetching mod files...');
+      logger.info('Fetching mod files...');
       const { gameVersion, modLoaderType, gameVersionTypeId, index, pageSize } = queryParams;
       const params = {
           modId: modId,
@@ -88,18 +95,18 @@ async function getModFiles(modId, queryParams = {}) {
           pageSize: pageSize
       };
 
-      console.log('Sending API request...');
+      logger.info('Sending API request...');
       const response = await axios.get(`${apiBaseUrl}/${modId}/files`, { headers, params });
       if (!response.status === 200) {
           errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
-          console.error(errormessage);
+          logger.error(errormessage);
           throw new Error(errormessage);
       }
 
-      console.log('Files fetched successfully');
+      logger.info('Files fetched successfully');
       return response.data.data; // Assuming response.data contains the 'data' array
   } catch (error) {
-      console.error(`API Error: Failed fetching mod files from: ${apiBaseUrl}/${modId}/files`, error.message);
+      logger.error(`API Error: Failed fetching mod files from: ${apiBaseUrl}/${modId}/files`, error.message);
       throw error; // Re-throw the error to be handled by the caller
   }
 }
@@ -109,13 +116,14 @@ async function getLatestFileId(guildId) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
     if (!modpackId){
+      logger.error('Modpack ID not found')
       throw new Error('Modpack ID not found');
     }
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files`, { headers });
     const files = response.data.data;
     if (response.status !== 200) {
       errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
-      console.error(errormessage);
+      logger.error(errormessage);
       throw new Error(errormessage);
     }
     
@@ -130,7 +138,7 @@ async function getLatestFileId(guildId) {
 
     return newestFile ? newestFile.id : null;
   } catch (error) {
-    console.error(`Error occurred while fetching latest file ID: ${error.message}`);
+    logger.error(`Error occurred while fetching latest file ID: ${error.message}`);
     return null;
   }
 }
@@ -142,13 +150,13 @@ async function getLatest(returnFileId, guildId) {
     if (!modpackId){
       throw new Error('Modpack ID not found');
     }
-    const url = apiBaseUrl + "/" + modpackId + "/files"
-    console.log(url)
+    const url = `${apiBaseUrl}/${modpackId}/files`
+    logger.info(url)
     const response = await axios.get(url, { headers });
     const files = response.data.data;
     if (response.status !== 200) {
       errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files. Status: ${response.status}`
-      console.error(errormessage);
+      logger.error(errormessage);
       throw new Error(errormessage);
     }
     
@@ -176,7 +184,7 @@ async function getLatest(returnFileId, guildId) {
       }
     }
   } catch (error) {
-    console.error(`Error occurred while fetching latest file: ${error.message}`);
+    logger.error(`Error occurred while fetching latest file: ${error.message}`);
     return "An error occurred while fetching the latest file. Please contact the bot developer.";
   }
 }
@@ -196,7 +204,7 @@ async function getFileDetails(fileId, guildId,raw) {
     const fileData = response.data.data;
     if (response.status !== 200) {
       errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files/${fileId}. Status: ${response.status}`
-      console.error(errormessage);
+      logger.error(errormessage);
       throw new Error(errormessage);
     }
     
@@ -219,11 +227,11 @@ async function getFileDetails(fileId, guildId,raw) {
         changelog: changelog
       };
     } else {
-      console.error('File details not found or incomplete in the response.');
+      logger.error('File details not found or incomplete in the response.');
       return "File details not found or incomplete in the response.";
     }
   } catch (error) {
-    console.error(`Error occurred while fetching file details: ${error.message}`);
+    logger.error(`Error occurred while fetching file details: ${error.message}`);
     return "An error occurred while fetching file details. Please contact the bot developer.";
   }
 }
@@ -239,7 +247,7 @@ async function getChangelog(fileId, guildId) {
     const response = await axios.get(`${apiBaseUrl}/${modpackId}/files/${fileId}/changelog`, { headers });
     if (response.status !== 200) {
       errormessage = `Failed to fetch files from ${apiBaseUrl}/${modId}/files/${fileId}/changelog. Status: ${response.status}`
-      console.error(errormessage);
+      logger.error(errormessage);
       throw new Error(errormessage);
     }
     
@@ -259,7 +267,7 @@ async function getChangelog(fileId, guildId) {
 
     return changelogPlainText;
   } catch (error) {
-    console.error(`Error occurred while fetching changelog: ${error.message}`);
+    logger.error(`Error occurred while fetching changelog: ${error.message}`);
     return 'An error occurred while fetching changelog. Please contact the bot developer.';
   }
 }
@@ -271,7 +279,7 @@ async function loadSettings(guildId, setting) {
     const settings = JSON.parse(data);
     return settings[guildId] ? settings[guildId][setting] : undefined;
   } catch (error) {
-    console.error('Error occurred while loading settings:', error.message);
+    logger.error('Error occurred while loading settings:', error.message);
     return undefined;
   }
 }
@@ -284,7 +292,7 @@ async function saveSettings(guildId, setting, value) {
       const data = await fsPromises.readFile(dbFilePath);
       settings = JSON.parse(data);
     } catch (error) {
-      console.error('Settings file not found or empty. Initializing new settings object.');
+      logger.error('Settings file not found or empty. Initializing new settings object.');
     }
 
     if (!settings[guildId]) {
@@ -294,9 +302,9 @@ async function saveSettings(guildId, setting, value) {
     settings[guildId][setting] = value;
 
     await fsPromises.writeFile(dbFilePath, JSON.stringify(settings, null, 2));
-    console.log('Settings saved successfully.');
+    logger.info('Settings saved successfully.');
   } catch (error) {
-    console.error('Error occurred while saving settings:', error.message);
+    logger.error('Error occurred while saving settings:', error.message);
   }
 }
 
