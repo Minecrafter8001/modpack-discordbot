@@ -275,7 +275,7 @@ async function getChangelog(fileId, guildId) {
 // Function to load settings from JSON database
 async function loadSettings(guildId, setting) {
   try {
-    const data = await fsPromises.readFile(dbFilePath); // Use fsPromises
+    const data = await fsPromises.readFile(dbFilePath);
     const settings = JSON.parse(data);
     return settings[guildId] ? settings[guildId][setting] : undefined;
   } catch (error) {

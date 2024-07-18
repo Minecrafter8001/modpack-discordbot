@@ -1,8 +1,9 @@
 const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
+const schedule = require('node-schedule');
 const declareCommands = require("./declare_commands");
-const internal = require('stream');
+const { load } = require('cheerio');
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
@@ -17,6 +18,9 @@ const logger = createLogger({
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     logger.info(`ran command: ${interaction.commandName}, \nin guild: ${interaction.guildId || 'DMs'}, \nby user: ${interaction.user.tag}`);
+    commandsRan = loadSettings('global','commandsRan')
+    if (commandsRan == null) {commandsRan = 0}
+    saveSettings('global','commandsRan',commandsRan+1)
 });
 
 
@@ -294,22 +298,14 @@ process.on('SIGINT', () => {
 bot.once("ready", () => {
     logger.log("Bot started");
     logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
-
-
 });
 
 // Refresh commands and then login
-async function main(restartCMD, channelid) {
+async function main() {
     await declareCommands();
+    logger.info("Starting bot...");
+    bot.login(token);
 
-    if (restartCMD) {
-        setTimeout(() => {
-            bot.login(token);
-        }, 10000); // Wait 10 seconds before logging in again after restart
-    } else {
-        logger.log("Starting bot...");
-        bot.login(token);
-    }
 }
 
 main();
