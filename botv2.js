@@ -70,7 +70,7 @@ bot.on('interactionCreate', async interaction => {
             logger.error("modpack id not set");
             return;
         }
-        logger.log(modpackId);
+        logger.debug(modpackId);
         const modFiles = await getModFiles(modpackId);
 
         if (!modFiles || modFiles.length === 0) {
@@ -193,7 +193,7 @@ bot.on('interactionCreate', async interaction => {
             interaction.reply('Error restarting bot.');
             return;
         }
-        logger.log(`Restart script output: ${stdout}`);
+        logger.info(`Restart script output: ${stdout}`);
         interaction.reply('Bot restarted successfully.');
     });
 });
@@ -218,7 +218,7 @@ bot.on('interactionCreate', async interaction => {
             interaction.reply('Error shutting down bot.');
             return;
         }
-        logger.log(`Shutdown script output: ${stdout}`);
+        logger.info(`Shutdown script output: ${stdout}`);
         interaction.reply('Bot shut down successfully.');
     });
 });
@@ -252,7 +252,7 @@ bot.on('interactionCreate', async interaction => {
             logger.error("modpack id not set");
             return;
         }
-        logger.log(modpackId);
+        logger.info(modpackId);
         const modFiles = await getModFiles(modpackId);
 
         if (!modFiles || modFiles.length === 0) {
@@ -276,12 +276,12 @@ bot.on('interactionCreate', async interaction => {
         const collector = message.createMessageComponentCollector({ filter, time: 60_000 });
 
         collector.on('collect', async i => {
+            collector.stop();
             const selectedVersionId = i.values[0];
             const selectedVersionDetails = await getFileDetails(selectedVersionId, interaction.guildId, true);
             const selectedVersionName = selectedVersionDetails.fileName;
             await saveSettings(interaction.guildId, 'server_version', parseInt(selectedVersionId));
-            await interaction.editReply(`Server version set to ${selectedVersionName}.`, { components: [] });
-            collector.stop();
+            await interaction.editReply({content:`Server version set to ${selectedVersionName}.`,  components: [] });
         });
     } catch (error) {
         logger.error(`botv2.js:Error fetching mod files: ${error.message}`);
@@ -290,13 +290,13 @@ bot.on('interactionCreate', async interaction => {
 });
 
 process.on('SIGINT', () => {
-    logger.log('Received SIGINT. Logging out...');
+    logger.info('Received SIGINT. Logging out...');
     bot.destroy();
     process.exit();
 });
 
 bot.once("ready", () => {
-    logger.log("Bot started");
+    logger.info("Bot started");
     logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
 });
 
