@@ -19,7 +19,7 @@ bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     logger.info(`ran command: ${interaction.commandName}, \nin guild: ${interaction.guildId || 'DMs'}, \nby user: ${interaction.user.tag}`);
     commandsRan = loadSettings('global','commandsRan')
-    if (commandsRan == null) {commandsRan = 0}
+    if (commandsRan != Number) {commandsRan = 0}
     saveSettings('global','commandsRan',commandsRan+1)
 });
 
