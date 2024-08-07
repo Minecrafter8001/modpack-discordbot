@@ -104,6 +104,9 @@ async function getModFiles(modId, queryParams = {}) {
       }
 
       logger.info('Files fetched successfully');
+      if (response.data.data.length === 0) {
+          throw new Error('No files found');
+      }
       return response.data.data; // Assuming response.data contains the 'data' array
   } catch (error) {
       logger.error(`API Error: Failed fetching mod files from: ${apiBaseUrl}/${modId}/files`, error.message);
