@@ -77,7 +77,7 @@ bot.on('interactionCreate', async interaction => {
             return await interaction.reply('No versions found.');
         }
 
-        const options = modFiles.map(file => ({
+        let options = modFiles.map(file => ({
             label: file.fileName,
             value: file.id.toString(),
         }));
