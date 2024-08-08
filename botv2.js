@@ -113,7 +113,7 @@ bot.on('interactionCreate', async interaction => {
 
     } catch (error) {
         logger.error('Error occurred while executing /changelog command:', error.message);
-        await interaction.update('An error occurred while fetching changelog.');
+        await interaction.editReply('An error occurred while fetching changelog.');
     }
 });
 
