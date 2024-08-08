@@ -82,6 +82,10 @@ bot.on('interactionCreate', async interaction => {
             value: file.id.toString(),
         }));
 
+        if (options.length > 25) {
+            options = options.slice(0, 25);
+        }
+
         const row = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
                 .setCustomId(`setversion_${interaction.guildId}`)
