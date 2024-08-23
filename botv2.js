@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus } = require('discord.js');
 const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
 const schedule = require('node-schedule');
@@ -13,16 +13,6 @@ const logger = createLogger({
     format: format.simple(),
     transports: [new transports.Console()]
 });
-
-
-bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand()) return;
-    logger.info(`ran command: ${interaction.commandName}, \nin guild: ${interaction.guildId || 'DMs'}, \nby user: ${interaction.user.tag}`);
-    commandsRan = loadSettings('global','commandsRan')
-    if (commandsRan != Number) {commandsRan = 0}
-    saveSettings('global','commandsRan',commandsRan+1)
-});
-
 
 
 // Define the /latest command
@@ -65,9 +55,9 @@ bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
-        if (typeof(modpackId) !== 'number') {
+        if (typeof(modpackId) !== Number) {
             await interaction.reply('Modpack ID not set');
-            logger.error("modpack id not set");
+            logger.info("modpack id not set");
             return;
         }
         logger.debug(modpackId);
@@ -247,12 +237,12 @@ bot.on('interactionCreate', async interaction => {
 
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
-        if (typeof(modpackId) !== 'number') {
+        if (typeof(modpackId) !== Number) {
             await interaction.reply('Modpack ID not set');
-            logger.error("modpack id not set");
+            logger.info("modpack id not set");
             return;
         }
-        logger.info(modpackId);
+        logger.debug(modpackId);
         const modFiles = await getModFiles(modpackId);
 
         if (!modFiles || modFiles.length === 0) {
@@ -291,6 +281,7 @@ bot.on('interactionCreate', async interaction => {
 
 process.on('SIGINT', () => {
     logger.info('Received SIGINT. Logging out...');
+    bot.user.setStatus(PresenceUpdateStatus.Invisible);
     bot.destroy();
     process.exit();
 });
@@ -298,6 +289,7 @@ process.on('SIGINT', () => {
 bot.once("ready", () => {
     logger.info("Bot started");
     logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
+    bot.user.setStatus(PresenceUpdateStatus.Online);
 });
 
 // Refresh commands and then login

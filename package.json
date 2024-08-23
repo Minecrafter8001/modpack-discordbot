@@ -1,6 +1,6 @@
 {
   "name": "minecrafters-discordbot",
-  "version": "0.0.1",
+  "version": "0.5.1",
   "main": "botv2.js",
   "scripts": {
     "start": "node botv2.js"
