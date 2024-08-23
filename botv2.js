@@ -67,10 +67,14 @@ bot.on('interactionCreate', async interaction => {
             return await interaction.reply('No versions found.');
         }
 
-        const options = modFiles.map(file => ({
+        let options = modFiles.map(file => ({
             label: file.fileName,
             value: file.id.toString(),
         }));
+
+        if (options.length > 25) {
+            options = options.slice(0, 25);
+        }
 
         const row = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
@@ -99,7 +103,7 @@ bot.on('interactionCreate', async interaction => {
 
     } catch (error) {
         logger.error('Error occurred while executing /changelog command:', error.message);
-        await interaction.update('An error occurred while fetching changelog.');
+        await interaction.editReply('An error occurred while fetching changelog.');
     }
 });
 
@@ -249,10 +253,14 @@ bot.on('interactionCreate', async interaction => {
             return await interaction.reply('No versions found.');
         }
 
-        const options = modFiles.map(file => ({
+        let options = modFiles.map(file => ({
             label: file.fileName,
             value: file.id.toString(),
         }));
+        if (options.length > 25) {
+            options = options.slice(0, 25);
+        }
+
 
         const row = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
@@ -301,4 +309,3 @@ async function main() {
 }
 
 main();
-
