@@ -1,18 +1,53 @@
-const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus, channelType, ChannelType } = require('discord.js');
 const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
-const schedule = require('node-schedule');
+const path = require('path');
 const declareCommands = require("./declare_commands");
-const { load } = require('cheerio');
 const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
 const token = getBotInfo('bot_token');
-const ownerId = getBotInfo('owner_id'); // Replace with your bot owner's user ID
+const ownerId = getBotInfo('owner_id');
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
+const workerfile = './updatecheck-worker.js';
+
+
 
 const logger = createLogger({
-    level: 'info',
+    level: getBotInfo('logger_level'),
     format: format.simple(),
     transports: [new transports.Console()]
 });
+
+
+async function saveservers() {
+    const servers = []
+    if (bot.guilds) {
+        bot.guilds.cache.forEach((guild) => {
+            servers.push(guild.id);
+        });
+    }
+    await saveSettings("global", "servers", servers);
+}
+
+bot.on('guildCreate', async (guild) => {
+    const servers = await loadServers();
+    servers.push(guild.id);
+    await saveSettings("global", "servers", servers);
+});
+
+bot.on('guildDelete', async (guild) => {
+    let servers = await loadServers();
+    servers = servers.filter(server => server !== guild.id);
+    await saveSettings("global", "servers", servers);
+});
+
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+    saveservers()
+});
+
+function isText(channel) {
+    return channel.type === ChannelType.GuildText;
+}
 
 
 // Define the /latest command
@@ -167,55 +202,6 @@ bot.on('interactionCreate', async interaction => {
     await interaction.reply('All commands have been reloaded.');
 });
 
-// Define the /restart command
-bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand() || interaction.commandName !== 'restart') return;
-
-    // Check if the user is the bot owner
-    if (interaction.user.id !== ownerId) {
-        return await interaction.reply('You do not have permission to use this command.');
-    }
-
-    logger.info("Restarting bot...");
-    await interaction.reply('Restarting bot...');
-
-    // Call the external script to handle bot restart
-    const { exec } = require('child_process');
-    exec('./manageBot.sh -r <bot_process_name>', (error, stdout, stderr) => {
-        if (error) {
-            logger.error(`Error executing restart script: ${error.message}`);
-            interaction.reply('Error restarting bot.');
-            return;
-        }
-        logger.info(`Restart script output: ${stdout}`);
-        interaction.reply('Bot restarted successfully.');
-    });
-});
-
-// Define the /shutdown command
-bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand() || interaction.commandName !== 'shutdown') return;
-
-    // Check if the user is the bot owner
-    if (interaction.user.id !== ownerId) {
-        return await interaction.reply('You do not have permission to use this command.');
-    }
-
-    logger.info("Shutting down bot...");
-    await interaction.reply('Shutting down bot...');
-
-    // Call the external script to handle bot shutdown
-    const { exec } = require('child_process');
-    exec('./manageBot.sh <bot_process_name>', (error, stdout, stderr) => {
-        if (error) {
-            logger.error(`Error executing shutdown script: ${error.message}`);
-            interaction.reply('Error shutting down bot.');
-            return;
-        }
-        logger.info(`Shutdown script output: ${stdout}`);
-        interaction.reply('Bot shut down successfully.');
-    });
-});
 
 // Define the /setmodpackid command
 bot.on('interactionCreate', async interaction => {
@@ -233,7 +219,7 @@ bot.on('interactionCreate', async interaction => {
 
 // Define the /setversion command with dropdown using getModFiles function
 bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand() || interaction.commandName !== 'setversion') return;
+    if (!interaction.isCommand() || interaction.commandName !== 'SetVersion') return;
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
         return await interaction.reply('You do not have permission to use this command.');
@@ -287,17 +273,102 @@ bot.on('interactionCreate', async interaction => {
     }
 });
 
+bot.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand() || interaction.commandName !== 'autocheckupdates') return;
+    
+    const guildId = interaction.guildId;
+    if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
+        logger.info(`User ${interaction.user.id} attempted to use /autocheckupdates without permission in guild ${guildId}.`);
+        return await interaction.reply('You do not have permission to use this command.');
+    }
+
+    let responseMessage = '';
+    try {
+        logger.info(`Executing /autocheckupdates command in guild ${guildId}.`);
+        const enabled = interaction.options.getBoolean('enabled');
+        const channelId = interaction.options.getString('channel_id');
+
+        if (enabled !== null) {
+            logger.info(`Setting autocheckupdates to ${enabled} in guild ${guildId}.`);
+            await saveSettings(guildId, 'autocheckupdates', enabled);
+            responseMessage += `Automatic update checking is now ${enabled ? 'enabled' : 'disabled'}.\n`;
+        }
+
+        if (channelId) {
+            logger.info(`Setting notification channel to ${channelId} in guild ${guildId}.`);
+            try {
+                const channel = await interaction.guild.channels.fetch(channelId);
+                if (channel && channel.type === ChannelType.GuildText) {
+                    await saveSettings(guildId, 'notification_channel_id', channelId);
+                    responseMessage += `Notification channel set to <#${channelId}>.\n`;
+                } else {
+                    responseMessage += 'Invalid channel ID or not a text channel.\n';
+                    logger.error(`Invalid channel ID or not a text channel in guild ${guildId}.`);
+                }
+            } catch (fetchError) {
+                responseMessage += 'Failed to fetch the channel. Please check if the channel ID is correct.\n';
+                logger.error(`Failed to fetch channel ${channelId} in guild ${guildId}: ${fetchError.message}`);
+            }
+        }
+
+        if (responseMessage === '') {
+            responseMessage = 'No changes were made. Please provide an option to update.';
+        }
+        
+        await interaction.reply(responseMessage.trim());
+    } catch (error) {
+        logger.error(`Error handling /autocheckupdates command in guild ${guildId}: ${error.message}`);
+        await interaction.reply('An error occurred while handling the command. Please try again later.');
+    }
+});
+
+
+
+
+
+
 process.on('SIGINT', () => {
     logger.info('Received SIGINT. Logging out...');
     bot.user.setStatus(PresenceUpdateStatus.Invisible);
     bot.destroy();
+    worker.postMessage({ command: 'stop' });
+    worker.terminate();
     process.exit();
 });
+
+async function startWorker() {
+    worker = new Worker(path.resolve(__dirname, workerfile));
+    logger.info('Starting worker...');
+    worker.postMessage("start");
+    worker.on('message', async (message) => {
+        if (message.version) {
+            const guild = bot.guilds.cache.get(message.serverId);
+            if (guild) {
+                const channelId = await loadSettings(message.serverId, 'notification_channel_id');
+                const channel = guild.channels.cache.get(channelId);
+                if (channel && channel.type === ChannelType.GuildText) {
+                    await channel.send(`Update found: ${message.version}`);
+                }
+            }
+        } else if (message.error) {
+            logger.error(`Worker error: ${message.error}`);
+        }
+    });
+
+    worker.on('error', (error) => logger.error(`Worker encountered an error: ${error}`));
+    worker.on('exit', (code) => {
+        if (code !== 0) logger.error(`Worker stopped with exit code ${code}`);
+    });
+}
+
 
 bot.once("ready", () => {
     logger.info("Bot started");
     logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
     bot.user.setStatus(PresenceUpdateStatus.Online);
+    saveservers()
+    startWorker();
+
 });
 
 // Refresh commands and then login
@@ -309,3 +380,4 @@ async function main() {
 }
 
 main();
+

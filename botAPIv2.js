@@ -10,11 +10,7 @@ const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
 const dbFilePath = './settings.json';
 const botInfoFilePath = './botinfo.json';
 
-const logger = createLogger({
-  level: 'info',
-  format: format.simple(),
-  transports: [new transports.Console()]
-});
+
 
 function getBotInfo(item) {
   try {
@@ -25,6 +21,7 @@ function getBotInfo(item) {
         '"curseforge_api_key": "YOUR_API_KEY_HERE",\n' +
         '"application_id": "YOUR_APPLICATION_ID_HERE",\n'+
         '"owner_id": "YOUR_USER_ID_HERE"\n' +
+        `"logger_level": "info"\n`+
        '}');
       logger.info('Bot info file created successfully.\nPlease edit it and restart the script.');
       process.exit();
@@ -41,7 +38,11 @@ function getBotInfo(item) {
     return undefined;
   }
 }
-
+const logger = createLogger({
+  level: getBotInfo('logger_level'),
+  format: format.simple(),
+  transports: [new transports.Console()]
+});
 const apiKey = getBotInfo('curseforge_api_key');
 
 // Define headers for API requests

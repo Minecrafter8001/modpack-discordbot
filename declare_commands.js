@@ -7,6 +7,11 @@ const APPLICATION_ID = getBotInfo('application_id');
 
 const commands = [
     {
+        name: 'reload',
+        description: 'Reloads commands (administrators only)',
+    },
+
+    {
         name: 'changelog',
         description: 'Get the changelog for a specific file',
     },
@@ -19,20 +24,7 @@ const commands = [
         description: 'Checks for a pack update',
     },
     {
-        name: 'reload',
-        description: 'Reload all commands (administrators only)',
-    },
-    /*{
-        name: 'restart',
-        description: 'Reboots the bot (bot owner only)',
-    },
-    
-    {
-        name: 'shutdown',
-        description: 'Shutdowns the bot (bot owner only)',
-    },*/
-    {
-        name: 'setmodpackid',
+        name: 'setmodpack_id',
         description: 'Set the modpack ID (administrators only)',
         options: [
             {
@@ -51,7 +43,36 @@ const commands = [
         name: 'serverversion',
         description: 'Gets the current server version\n(assuming lion remembered to update it)',
     },
+    {
+        name: 'autocheckupdates',
+        description: 'toggles automated update checking every hour (administrators only)',
+        options: [
+            {
+                name: 'enabled',
+                description: 'Enable or disable automatic update checking',
+                type: 5,
+                required: false,
+                choices: [
+                    {
+                        name: 'true',
+                        value: true,
+                    },
+                    {
+                        name: 'false',
+                        value: false,
+                    },
+                ],
+            },
+            {
+                name: 'channel_id',
+                description: 'The ID of the channel to send the update message to',
+                type: 3,
+                required: false,
+            }
+        ],
+    }
 ];
+
 
 const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
