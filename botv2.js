@@ -227,7 +227,7 @@ bot.on('interactionCreate', async interaction => {
 
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
-        if (modpackId) {
+        if (!modpackId) {
             await interaction.reply('Modpack ID not set');
             logger.info("modpack id not set");
             return;
