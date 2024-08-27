@@ -219,7 +219,7 @@ bot.on('interactionCreate', async interaction => {
 
 // Define the /setversion command with dropdown using getModFiles function
 bot.on('interactionCreate', async interaction => {
-    if (!interaction.isCommand() || interaction.commandName !== 'SetVersion') return;
+    if (!interaction.isCommand() || interaction.commandName !== 'setversion') return;
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
         return await interaction.reply('You do not have permission to use this command.');
