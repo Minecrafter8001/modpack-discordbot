@@ -90,7 +90,7 @@ bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
-        if (typeof(modpackId) !== Number) {
+        if (!modpackId){
             await interaction.reply('Modpack ID not set');
             logger.info("modpack id not set");
             return;
@@ -227,7 +227,7 @@ bot.on('interactionCreate', async interaction => {
 
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
-        if (typeof(modpackId) !== Number) {
+        if (modpackId) {
             await interaction.reply('Modpack ID not set');
             logger.info("modpack id not set");
             return;
