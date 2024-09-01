@@ -8,6 +8,7 @@ const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const workerfile = './updatecheck-worker.js';
+const commands_enabled = false
 
 
 
@@ -42,6 +43,9 @@ bot.on('guildDelete', async (guild) => {
 
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
+    if (!commands_enabled) {
+        interaction.reply("all commands disabled")
+    }
     saveservers()
 });
 
@@ -53,6 +57,7 @@ function isText(channel) {
 // Define the /latest command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'latest') return;
+    if (!commands_enabled) return;
         
     try {
       const fileInfo = await getLatest(false, interaction.guildId);
@@ -88,6 +93,7 @@ bot.on('interactionCreate', async interaction => {
 // Define the /changelog command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
+    if (!commands_enabled) return;
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
         if (!modpackId){
@@ -144,6 +150,7 @@ bot.on('interactionCreate', async interaction => {
 
 // Define the /checkupdates command
 bot.on('interactionCreate', async interaction => {
+    if (!commands_enabled) return;
 
     if (!interaction.isCommand() || interaction.commandName !== 'checkupdates') return;
     try {
@@ -162,6 +169,7 @@ bot.on('interactionCreate', async interaction => {
 // Define the /serverversion command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'serverversion') return;
+    if (!commands_enabled) return;
   
     try {
       logger.info('Setting server version');
@@ -191,6 +199,7 @@ bot.on('interactionCreate', async interaction => {
 // Define the /reload command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'reload') return;
+    if (!commands_enabled) return;
 
     // Check if the user has administrator permissions or is the bot owner
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
@@ -206,6 +215,7 @@ bot.on('interactionCreate', async interaction => {
 // Define the /setmodpackid command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'setmodpackid') return;
+    if (!commands_enabled) return;
 
     // Check if the user has administrator permissions
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
@@ -220,6 +230,7 @@ bot.on('interactionCreate', async interaction => {
 // Define the /setversion command with dropdown using getModFiles function
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'setversion') return;
+    if (!commands_enabled) return;
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
         return await interaction.reply('You do not have permission to use this command.');
@@ -275,6 +286,7 @@ bot.on('interactionCreate', async interaction => {
 
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'autocheckupdates') return;
+    if (!commands_enabled) return;
     
     const guildId = interaction.guildId;
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
