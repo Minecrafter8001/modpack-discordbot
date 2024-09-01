@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus, channelType, ChannelType } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus, channelType, ChannelType, Activity, ActivityType } = require('discord.js');
 const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
 const { createLogger, format, transports } = require('winston');
 const path = require('path');
@@ -377,7 +377,14 @@ async function startWorker() {
 bot.once("ready", () => {
     logger.info("Bot started");
     logger.debug("Bot username:" + bot.user.username +"#"+ bot.user.discriminator +"\nBot id:" + bot.user.id);
+    if (!commands_enabled) {
+        bot.user.setPresence({
+            activities: [{ name: 'Disabled', type: ActivityType.Playing }],
+        })
+        bot.user.setStatus(PresenceUpdateStatus.DoNotDisturb)
+    }else{
     bot.user.setStatus(PresenceUpdateStatus.Online);
+    }
     saveservers()
     startWorker();
 
