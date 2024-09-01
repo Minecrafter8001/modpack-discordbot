@@ -45,6 +45,7 @@ bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     if (!commands_enabled) {
         interaction.reply("All commands are currently disabled")
+        logger.info("A command was attempted to be executed but all commands are currently disabled")
     }
     saveservers()
 });
