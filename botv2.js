@@ -44,7 +44,7 @@ bot.on('guildDelete', async (guild) => {
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     if (!commands_enabled) {
-        interaction.reply("all commands disabled")
+        interaction.reply("All commands are currently disabled")
     }
     saveservers()
 });
