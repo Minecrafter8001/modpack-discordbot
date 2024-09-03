@@ -388,6 +388,7 @@ bot.once("ready", () => {
     }
     saveservers()
     startWorker();
+    
 
 });
 
