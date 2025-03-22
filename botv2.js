@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, PresenceUpdateStatus, channelType, ChannelType, Activity, ActivityType } = require('discord.js');
-const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates, saveSettings, loadSettings } = require('./botAPIv2');
+const { getBotInfo, getModFiles, getLatest, getFileDetails, checkUpdates } = require('./botAPIv2');
+const { loadSettings, saveSettings } = require('./dbApi');
 const { createLogger, format, transports } = require('winston');
 const path = require('path');
 const declareCommands = require("./declare_commands");
@@ -8,7 +9,7 @@ const token = getBotInfo('bot_token');
 const ownerId = getBotInfo('owner_id');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const workerfile = './updatecheck-worker.js';
-const commands_enabled = false
+const commands_enabled = true
 
 
 
@@ -26,7 +27,16 @@ async function saveservers() {
             servers.push(guild.id);
         });
     }
-    await saveSettings("global", "servers", servers);
+    await saveSettings("global", "servers", servers, "./servers.json");
+}
+
+function checkblacklist(guildId) {
+    const blacklist = getBotInfo('blacklist');
+    if (blacklist.includes(guildId) | !commands_enabled) {
+        return false;
+    }else{
+    return true;
+    }
 }
 
 bot.on('guildCreate', async (guild) => {
@@ -50,15 +60,12 @@ bot.on('interactionCreate', async interaction => {
     saveservers()
 });
 
-function isText(channel) {
-    return channel.type === ChannelType.GuildText;
-}
-
-
 // Define the /latest command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'latest') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
         
     try {
       const fileInfo = await getLatest(false, interaction.guildId);
@@ -94,7 +101,9 @@ bot.on('interactionCreate', async interaction => {
 // Define the /changelog command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'changelog') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
     try {
         const modpackId = await loadSettings(interaction.guildId, 'modpackid');
         if (!modpackId){
@@ -151,7 +160,9 @@ bot.on('interactionCreate', async interaction => {
 
 // Define the /checkupdates command
 bot.on('interactionCreate', async interaction => {
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
 
     if (!interaction.isCommand() || interaction.commandName !== 'checkupdates') return;
     try {
@@ -170,21 +181,23 @@ bot.on('interactionCreate', async interaction => {
 // Define the /serverversion command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'serverversion') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
   
     try {
-      logger.info('Setting server version');
+      logger.info('Getting server version');
   
       const guildId = interaction.guildId;
       const fileId = await loadSettings(guildId, 'server_version');
       if (!typeof(fileID) == "number"){
-        interaction.reply('Server version not set.\n please spam lion until he updates it : )');
+        interaction.reply('Server version not set.');
         logger.error("server version not set");
         return;
       }
       
       if (!fileId) {
-        interaction.reply('Server version not set.\n please spam lion until he updates it : )');
+        interaction.reply('Server version not set.');
         return;
       }
   
@@ -200,7 +213,9 @@ bot.on('interactionCreate', async interaction => {
 // Define the /reload command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'reload') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
 
     // Check if the user has administrator permissions or is the bot owner
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
@@ -216,7 +231,9 @@ bot.on('interactionCreate', async interaction => {
 // Define the /setmodpackid command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'setmodpackid') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
 
     // Check if the user has administrator permissions
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
@@ -228,10 +245,12 @@ bot.on('interactionCreate', async interaction => {
     await interaction.reply(`Modpack ID set to ${modpackId}.`);
 });
 
-// Define the /setversion command with dropdown using getModFiles function
+// Define the /setversion command
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'setversion') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
         return await interaction.reply('You do not have permission to use this command.');
@@ -287,7 +306,9 @@ bot.on('interactionCreate', async interaction => {
 
 bot.on('interactionCreate', async interaction => {
     if (!interaction.isCommand() || interaction.commandName !== 'autocheckupdates') return;
-    if (!commands_enabled) return;
+if (!checkblacklist(interaction.guildId)) {
+    await interaction.reply('Commands are currently disabled');
+}
     
     const guildId = interaction.guildId;
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && interaction.user.id !== ownerId) {
@@ -334,11 +355,6 @@ bot.on('interactionCreate', async interaction => {
         await interaction.reply('An error occurred while handling the command. Please try again later.');
     }
 });
-
-
-
-
-
 
 process.on('SIGINT', () => {
     logger.info('Received SIGINT. Logging out...');

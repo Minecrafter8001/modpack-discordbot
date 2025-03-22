@@ -1,3 +1,4 @@
+const { loadSettings, saveSettings } = require('./dbApi');
 const axios = require('axios');
 const { htmlToText } = require('html-to-text');
 const cheerio = require('cheerio');
@@ -7,7 +8,6 @@ const { createLogger, format, transports } = require('winston');
 
 // Define constants
 const apiBaseUrl = 'https://api.curseforge.com/v1/mods';
-const dbFilePath = './settings.json';
 const botInfoFilePath = './botinfo.json';
 
 
@@ -22,6 +22,7 @@ function getBotInfo(item) {
         '"application_id": "YOUR_APPLICATION_ID_HERE",\n'+
         '"owner_id": "YOUR_USER_ID_HERE"\n' +
         `"logger_level": "info"\n`+
+        '"blacklist: [\n]"\n' +
        '}');
       logger.info('Bot info file created successfully.\nPlease edit it and restart the script.');
       process.exit();
@@ -195,7 +196,7 @@ async function getLatest(returnFileId, guildId) {
 
 
 // Function to fetch details about a specific file from CurseForge API
-async function getFileDetails(fileId, guildId,raw) {
+async function getFileDetails(fileId, guildId, raw) {
   try {
     const modpackId = await loadSettings(guildId, 'modpackid');
     if (!modpackId){
@@ -276,40 +277,4 @@ async function getChangelog(fileId, guildId) {
   }
 }
 
-// Function to load settings from JSON database
-async function loadSettings(guildId, setting) {
-  try {
-    const data = await fsPromises.readFile(dbFilePath);
-    const settings = JSON.parse(data);
-    return settings[guildId] ? settings[guildId][setting] : undefined;
-  } catch (error) {
-    logger.error('Error occurred while loading settings:', error.message);
-    return undefined;
-  }
-}
-
-// Function to save settings to JSON database
-async function saveSettings(guildId, setting, value) {
-  try {
-    let settings = {};
-    try {
-      const data = await fsPromises.readFile(dbFilePath);
-      settings = JSON.parse(data);
-    } catch (error) {
-      logger.error('Settings file not found or empty. Initializing new settings object.');
-    }
-
-    if (!settings[guildId]) {
-      settings[guildId] = {};
-    }
-
-    settings[guildId][setting] = value;
-
-    await fsPromises.writeFile(dbFilePath, JSON.stringify(settings, null, 2));
-    logger.info('Settings saved successfully.');
-  } catch (error) {
-    logger.error('Error occurred while saving settings:', error.message);
-  }
-}
-
-module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, saveSettings, loadSettings, getBotInfo, getLatest};
+module.exports = { getModFiles, getLatestFileId, getFileDetails, checkUpdates, getBotInfo, getLatest};

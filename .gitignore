@@ -3,3 +3,4 @@ node_modules
 settings.json
 modpack-discordbot.code-workspace
 .vscode/launch.json
+servers.json

@@ -7,11 +7,6 @@ const APPLICATION_ID = getBotInfo('application_id');
 
 const commands = [
     {
-        name: 'reload',
-        description: 'Reloads commands (administrators only)',
-    },
-
-    {
         name: 'changelog',
         description: 'Get the changelog for a specific file',
     },
@@ -41,7 +36,7 @@ const commands = [
     },
     {
         name: 'serverversion',
-        description: 'Gets the current server version\n(assuming lion remembered to update it)',
+        description: 'Gets the current server version',
     },
     {
         name: 'autocheckupdates',
